@@ -1,6 +1,8 @@
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { ShoppingCart, Heart, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useCart } from "@/contexts/CartContext";
 import { useState } from "react";
 
 interface ProductCardProps {
@@ -12,8 +14,19 @@ interface ProductCardProps {
   reviews?: number;
 }
 
-export function ProductCard({ title, price, image, rating = 4.5, reviews = 120 }: ProductCardProps) {
+export function ProductCard({ id, title, price, image, rating = 4.5, reviews = 120 }: ProductCardProps) {
+  const navigate = useNavigate();
+  const { addToCart } = useCart();
+  const { products } = require("@/data/mockData");
   const [isHovered, setIsHovered] = useState(false);
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const product = products.find((p: any) => p.id === id);
+    if (product) {
+      addToCart(product);
+    }
+  };
 
   return (
     <motion.div
@@ -24,6 +37,7 @@ export function ProductCard({ title, price, image, rating = 4.5, reviews = 120 }
       className="bg-card rounded-2xl overflow-hidden shadow hover:shadow-lg transition-shadow cursor-pointer"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={() => navigate(`/product/${id}`)}
     >
       <div className="relative aspect-square overflow-hidden bg-muted">
         <img
@@ -73,7 +87,11 @@ export function ProductCard({ title, price, image, rating = 4.5, reviews = 120 }
             }}
             transition={{ duration: 0.2 }}
           >
-            <Button size="sm" className="rounded-full gap-2">
+            <Button 
+              size="sm" 
+              className="rounded-full gap-2"
+              onClick={handleAddToCart}
+            >
               <ShoppingCart className="h-4 w-4" />
               {isHovered && <span>Add</span>}
             </Button>
