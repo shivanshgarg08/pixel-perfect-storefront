@@ -1,12 +1,54 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Header } from "@/components/Header";
 import { CategoryCircle } from "@/components/CategoryCircle";
 import { ProductCard } from "@/components/ProductCard";
 import { HeroSection } from "@/components/HeroSection";
+import { ProductFilters, FilterState } from "@/components/ProductFilters";
 import { categories, products } from "@/data/mockData";
 import { ArrowRight } from "lucide-react";
 
 const Index = () => {
+  const [filters, setFilters] = useState<FilterState>({
+    category: "All Categories",
+    priceRange: [0, 2000],
+    sortBy: "featured",
+    searchQuery: "",
+  });
+
+  const filteredProducts = products
+    .filter((product) => {
+      // Category filter
+      if (filters.category !== "All Categories" && product.category !== filters.category) {
+        return false;
+      }
+
+      // Price range filter
+      if (product.price < filters.priceRange[0] || product.price > filters.priceRange[1]) {
+        return false;
+      }
+
+      // Search query filter
+      if (filters.searchQuery && !product.title.toLowerCase().includes(filters.searchQuery.toLowerCase())) {
+        return false;
+      }
+
+      return true;
+    })
+    .sort((a, b) => {
+      switch (filters.sortBy) {
+        case "price-low":
+          return a.price - b.price;
+        case "price-high":
+          return b.price - a.price;
+        case "rating":
+          return (b.rating || 0) - (a.rating || 0);
+        case "newest":
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        default:
+          return 0;
+      }
+    });
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -39,25 +81,46 @@ const Index = () => {
         {/* Trending Products */}
         <section>
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-display font-bold">Trending Now</h2>
-            <button className="flex items-center gap-2 text-primary font-medium hover:gap-3 transition-all">
-              View all <ArrowRight className="h-4 w-4" />
-            </button>
+            <h2 className="text-3xl font-display font-bold">
+              {filters.category !== "All Categories" ? filters.category : "All Products"}
+            </h2>
+            <span className="text-muted-foreground">
+              {filteredProducts.length} products
+            </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {products.slice(0, 8).map((product) => (
-              <ProductCard
-                key={product.id}
-                id={product.id}
-                title={product.title}
-                price={product.price}
-                image={product.images[0]}
-                rating={product.rating}
-                reviews={product.reviews}
-              />
-            ))}
-          </div>
+          <ProductFilters onFilterChange={setFilters} />
+
+          {filteredProducts.length === 0 ? (
+            <div className="text-center py-16">
+              <p className="text-xl text-muted-foreground">No products found matching your filters.</p>
+              <button 
+                onClick={() => setFilters({
+                  category: "All Categories",
+                  priceRange: [0, 2000],
+                  sortBy: "featured",
+                  searchQuery: "",
+                })}
+                className="text-primary hover:underline mt-4"
+              >
+                Clear filters
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {filteredProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  id={product.id}
+                  title={product.title}
+                  price={product.price}
+                  image={product.images[0]}
+                  rating={product.rating}
+                  reviews={product.reviews}
+                />
+              ))}
+            </div>
+          )}
         </section>
 
         {/* Featured Deals */}
@@ -85,27 +148,27 @@ const Index = () => {
       {/* Footer */}
       <footer className="bg-card border-t border-border mt-16 py-12">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
             <div>
               <h3 className="font-semibold mb-4">Buy</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-primary transition-colors">Registration</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">Bidding & buying</a></li>
+                <li><a href="#" className="hover:text-primary transition-colors">How to Buy</a></li>
+                <li><a href="#" className="hover:text-primary transition-colors">Bidding & Buying</a></li>
                 <li><a href="#" className="hover:text-primary transition-colors">Stores</a></li>
               </ul>
             </div>
             <div>
               <h3 className="font-semibold mb-4">Sell</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-primary transition-colors">Start selling</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">Learn to sell</a></li>
+                <li><a href="#" className="hover:text-primary transition-colors">Start Selling</a></li>
+                <li><a href="#" className="hover:text-primary transition-colors">Learn to Sell</a></li>
                 <li><a href="#" className="hover:text-primary transition-colors">Affiliates</a></li>
               </ul>
             </div>
             <div>
               <h3 className="font-semibold mb-4">About</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-primary transition-colors">Company info</a></li>
+                <li><a href="#" className="hover:text-primary transition-colors">Company Info</a></li>
                 <li><a href="#" className="hover:text-primary transition-colors">Careers</a></li>
                 <li><a href="#" className="hover:text-primary transition-colors">Press</a></li>
               </ul>
@@ -113,14 +176,14 @@ const Index = () => {
             <div>
               <h3 className="font-semibold mb-4">Help & Contact</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-primary transition-colors">Seller Center</a></li>
+                <li><a href="#" className="hover:text-primary transition-colors">Help Center</a></li>
                 <li><a href="#" className="hover:text-primary transition-colors">Contact Us</a></li>
                 <li><a href="#" className="hover:text-primary transition-colors">Returns</a></li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-border mt-8 pt-8 text-center text-sm text-muted-foreground">
-            <p>© 2024 eBay Clone. All rights reserved.</p>
+          <div className="border-t border-border pt-8 text-center text-sm text-muted-foreground">
+            <p>© 2024 My Cart. All rights reserved. Built with excellence.</p>
           </div>
         </div>
       </footer>
